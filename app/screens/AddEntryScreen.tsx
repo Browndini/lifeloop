@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { Alert, Image, SafeAreaView, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { cacheDirectory, copyAsync, documentDirectory, getInfoAsync, makeDirectoryAsync } from "expo-file-system";
+import { Directory, File, Paths } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import { nanoid } from "nanoid/non-secure";
+import { useEffect, useMemo, useState } from "react";
+import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "../components/Header";
 import { useEntries } from "../context/EntriesContext";
+import { palette, shadows } from "../theme";
 import { JournalEntry } from "../utils/storage";
 
 export default function AddEntryScreen() {
@@ -62,18 +64,18 @@ export default function AddEntryScreen() {
 
     try {
       setLoading(true);
-      const baseDirectory = `${documentDirectory ?? cacheDirectory ?? ""}lifeloop/`;
-      const directoryInfo = await getInfoAsync(baseDirectory);
-      if (!directoryInfo.exists) {
-        await makeDirectoryAsync(baseDirectory, { intermediates: true });
+      const baseDirectory = new Directory(Paths.document, "lifeloop");
+      if (!baseDirectory.exists) {
+        baseDirectory.create({ intermediates: true });
       }
 
       let storedUri = imageUri;
-      const alreadyStored = imageUri.startsWith(baseDirectory);
+      const alreadyStored = imageUri.startsWith(baseDirectory.uri);
       if (!alreadyStored) {
-        const destination = `${baseDirectory}${today}.jpg`;
-        await copyAsync({ from: imageUri, to: destination });
-        storedUri = destination;
+        const destinationFile = new File(baseDirectory, `${today}.jpg`);
+        const sourceFile = new File(imageUri);
+        sourceFile.copy(destinationFile);
+        storedUri = destinationFile.uri;
       }
 
       const entry: JournalEntry = {
@@ -97,52 +99,48 @@ export default function AddEntryScreen() {
   const disabled = loading;
 
   return (
-    <SafeAreaView className="flex-1 bg-[#f9f6f2]">
-      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 160 }}>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <Header title="Today" subtitle="Capture your daily moment" />
 
-        <View className="mb-6 overflow-hidden rounded-3xl bg-white shadow-md shadow-sand-200">
+        <View style={styles.card}>
           {imageUri ? (
-            <Image source={{ uri: imageUri }} className="h-80 w-full" resizeMode="cover" />
+            <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
           ) : (
-            <View className="h-80 items-center justify-center bg-sand-100">
-              <Text className="text-lg text-sand-500">No photo yet</Text>
+            <View style={styles.placeholder}>
+              <Text style={styles.placeholderText}>No photo yet</Text>
             </View>
           )}
-          <View className="flex-row border-t border-sand-100">
+          <View style={styles.actionBar}>
             <ActionButton label="Take photo" onPress={takePhoto} />
             <ActionButton label="Pick from library" onPress={pickImage} />
           </View>
         </View>
 
-        <Text className="mb-2 text-sm font-semibold uppercase tracking-wide text-sand-500">Caption</Text>
+        <Text style={styles.label}>Caption</Text>
         <TextInput
           value={caption}
           onChangeText={setCaption}
           placeholder="Describe the moment in a sentence"
           maxLength={100}
-          style={{
-            minHeight: 120,
-            textAlignVertical: "top",
-          }}
-          className="rounded-3xl bg-white p-5 text-base text-sand-700 shadow-sm shadow-sand-200"
+          style={styles.textInput}
           multiline
           editable={!disabled}
         />
-        <Text className="mt-2 text-right text-sm text-sand-400">{caption.length}/100</Text>
+        <Text style={styles.charCount}>{caption.length}/100</Text>
 
         <TouchableOpacity
           onPress={handleSave}
           disabled={disabled}
-          className={`mt-8 rounded-full bg-sand-600 py-4 ${disabled ? "opacity-70" : ""}`}
+          style={[styles.saveButton, disabled && styles.saveButtonDisabled]}
         >
-          <Text className="text-center text-lg font-semibold text-white">
+          <Text style={styles.saveButtonText}>
             {existing ? "Update today" : "Save memory"}
           </Text>
         </TouchableOpacity>
 
         {existing ? (
-          <Text className="mt-6 text-center text-sm text-sand-500">
+          <Text style={styles.infoText}>
             You already have a memory today. Update it if you wish to change it.
           </Text>
         ) : null}
@@ -158,8 +156,102 @@ type ActionButtonProps = {
 
 function ActionButton({ label, onPress }: ActionButtonProps) {
   return (
-    <TouchableOpacity onPress={onPress} className="flex-1 items-center justify-center py-4">
-      <Text className="text-sm font-semibold text-sand-600">{label}</Text>
+    <TouchableOpacity onPress={onPress} style={styles.actionButton}>
+      <Text style={styles.actionButtonText}>{label}</Text>
     </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: palette.background,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 160,
+  },
+  card: {
+    marginBottom: 24,
+    borderRadius: 30,
+    backgroundColor: palette.surface,
+    overflow: "hidden",
+    ...shadows.md,
+  },
+  image: {
+    height: 280,
+    width: "100%",
+  },
+  placeholder: {
+    height: 280,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: palette.primaryLight,
+  },
+  placeholderText: {
+    fontSize: 18,
+    color: palette.textMuted,
+  },
+  actionBar: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderColor: palette.border,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  actionButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: palette.primary,
+  },
+  label: {
+    marginBottom: 8,
+    fontSize: 12,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    fontWeight: "600",
+    color: palette.textMuted,
+  },
+  textInput: {
+    minHeight: 120,
+    textAlignVertical: "top",
+    borderRadius: 24,
+    backgroundColor: palette.surface,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: palette.textStrong,
+    ...shadows.sm,
+  },
+  charCount: {
+    marginTop: 8,
+    textAlign: "right",
+    fontSize: 13,
+    color: palette.textMuted,
+  },
+  saveButton: {
+    marginTop: 32,
+    borderRadius: 999,
+    backgroundColor: palette.primary,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  saveButtonDisabled: {
+    opacity: 0.7,
+  },
+  saveButtonText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "white",
+  },
+  infoText: {
+    marginTop: 24,
+    textAlign: "center",
+    fontSize: 14,
+    color: palette.textMuted,
+    lineHeight: 20,
+  },
+});

@@ -1,10 +1,12 @@
 import { useCallback, useMemo, useState } from "react";
-import { FlatList, Pressable, RefreshControl, SafeAreaView, Text, View } from "react-native";
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { EmptyState } from "../components/EmptyState";
 import { EntryCard } from "../components/EntryCard";
 import { Header } from "../components/Header";
 import { useEntries } from "../context/EntriesContext";
 import type { JournalEntry } from "../utils/storage";
+import { palette, shadows } from "../theme";
 
 const VIEW_MODES = [
   { key: "list", title: "Timeline" },
@@ -23,7 +25,7 @@ export default function HomeScreen() {
     ({ item, index }: { item: JournalEntry; index: number }) => {
       if (columns === 2) {
         return (
-          <View className={index % 2 === 0 ? "pr-2" : "pl-2"}>
+          <View style={index % 2 === 0 ? styles.gridItemLeft : styles.gridItemRight}>
             <EntryCard entry={item} />
           </View>
         );
@@ -35,9 +37,9 @@ export default function HomeScreen() {
 
   const header = useMemo(
     () => (
-      <View className="px-6 pt-10">
+      <View style={styles.headerContainer}>
         <Header title="Memories" subtitle="Your daily reflections" />
-        <View className="mb-6 flex-row gap-2 rounded-full bg-white p-2 shadow-sm shadow-sand-200">
+        <View style={styles.toggleGroup}>
           {VIEW_MODES.map((mode) => (
             <ViewToggle
               key={mode.key}
@@ -53,7 +55,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-[#f9f6f2]">
+    <SafeAreaView style={styles.safeArea}>
       <FlatList
         data={entries}
         key={columns}
@@ -66,7 +68,7 @@ export default function HomeScreen() {
           paddingBottom: 120,
           paddingHorizontal: columns === 2 ? 16 : 24,
         }}
-        columnWrapperStyle={columns === 2 ? { paddingHorizontal: 0 } : undefined}
+        columnWrapperStyle={columns === 2 ? styles.columnWrapper : undefined}
         renderItem={renderItem}
       />
     </SafeAreaView>
@@ -83,11 +85,58 @@ function ViewToggle({ label, active, onPress }: ToggleProps) {
   return (
     <Pressable
       onPress={onPress}
-      className={`flex-1 items-center justify-center rounded-full px-4 py-2 ${
-        active ? "bg-sand-600 shadow-md shadow-sand-300" : "bg-transparent"
-      }`}
+      style={[styles.toggleButton, active && styles.toggleButtonActive]}
     >
-      <Text className={`text-sm font-semibold ${active ? "text-white" : "text-sand-500"}`}>{label}</Text>
+      <Text style={[styles.toggleText, active && styles.toggleTextActive]}>{label}</Text>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: palette.background,
+  },
+  headerContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 40,
+  },
+  toggleGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: palette.surface,
+    borderRadius: 999,
+    padding: 10,
+    marginBottom: 24,
+    ...shadows.sm,
+  },
+  toggleButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  toggleButtonActive: {
+    backgroundColor: palette.primary,
+  },
+  toggleText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: palette.textMuted,
+  },
+  toggleTextActive: {
+    color: "white",
+  },
+  gridItemLeft: {
+    paddingRight: 8,
+  },
+  gridItemRight: {
+    paddingLeft: 8,
+  },
+  columnWrapper: {
+    paddingHorizontal: 0,
+  },
+});

@@ -1,5 +1,6 @@
-import { Image, Pressable, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { JournalEntry } from "../utils/storage";
+import { palette, shadows } from "../theme";
 
 type EntryCardProps = {
   entry: JournalEntry;
@@ -12,20 +13,50 @@ export function EntryCard({ entry, onPress, onLongPress }: EntryCardProps) {
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
-      android_ripple={{ color: "#e8dbcf" }}
-      className="mb-4 overflow-hidden rounded-3xl bg-white shadow-sm shadow-sand-200"
+      android_ripple={{ color: palette.border }}
+      style={styles.card}
     >
-      <Image source={{ uri: entry.imageUri }} className="h-60 w-full" resizeMode="cover" />
-      <View className="p-5">
-        <Text className="text-sm uppercase tracking-wide text-sand-500">
+      <Image source={{ uri: entry.imageUri }} style={styles.image} resizeMode="cover" />
+      <View style={styles.content}>
+        <Text style={styles.date}>
           {new Date(entry.date).toLocaleDateString(undefined, {
             weekday: "long",
             month: "long",
             day: "numeric",
           })}
         </Text>
-        <Text className="mt-2 text-lg font-display text-sand-800">{entry.caption}</Text>
+        <Text style={styles.caption}>{entry.caption}</Text>
       </View>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    marginBottom: 16,
+    borderRadius: 24,
+    backgroundColor: palette.surface,
+    overflow: "hidden",
+    ...shadows.sm,
+  },
+  image: {
+    height: 240,
+    width: "100%",
+  },
+  content: {
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+  },
+  date: {
+    fontSize: 13,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    color: palette.textMuted,
+  },
+  caption: {
+    marginTop: 8,
+    fontSize: 18,
+    fontWeight: "600",
+    color: palette.textStrong,
+  },
+});

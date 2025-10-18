@@ -1,4 +1,5 @@
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { palette } from "../theme";
 
 type HeaderProps = {
   title: string;
@@ -7,9 +8,25 @@ type HeaderProps = {
 
 export function Header({ title, subtitle }: HeaderProps) {
   return (
-    <View className="mb-6">
-      <Text className="text-3xl font-display text-sand-800">{title}</Text>
-      {subtitle ? <Text className="mt-1 text-base text-sand-600">{subtitle}</Text> : null}
+    <View style={styles.container}>
+      <Text style={styles.title}>{title}</Text>
+      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: "600",
+    color: palette.textStrong,
+  },
+  subtitle: {
+    marginTop: 4,
+    fontSize: 16,
+    color: palette.textMuted,
+  },
+});

@@ -1,4 +1,5 @@
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { palette } from "../theme";
 
 type EmptyStateProps = {
   message: string;
@@ -6,11 +7,38 @@ type EmptyStateProps = {
 
 export function EmptyState({ message }: EmptyStateProps) {
   return (
-    <View className="items-center justify-center px-8 py-16">
-      <View className="mb-6 h-28 w-28 items-center justify-center rounded-full bg-sand-100">
-        <Text className="text-4xl">📷</Text>
+    <View style={styles.container}>
+      <View style={styles.iconWrapper}>
+        <Text style={styles.icon}>📷</Text>
       </View>
-      <Text className="text-center text-lg text-sand-600">{message}</Text>
+      <Text style={styles.message}>{message}</Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 32,
+    paddingVertical: 64,
+  },
+  iconWrapper: {
+    width: 112,
+    height: 112,
+    borderRadius: 56,
+    backgroundColor: palette.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 24,
+  },
+  icon: {
+    fontSize: 36,
+  },
+  message: {
+    textAlign: "center",
+    fontSize: 18,
+    color: palette.textMuted,
+    lineHeight: 26,
+  },
+});

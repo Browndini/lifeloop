@@ -45,8 +45,8 @@ The app should feel calm, beautiful, and modern â€” similar to Notion or Stoic â
 - React Navigation
 - AsyncStorage or expo-sqlite
 - Expo Camera + ImagePicker
-- NativeWind (Tailwind for RN styling)
-- Context or Zustand for state management
+- do not use NativeWind (Tailwind for RN styling)
+- redux for state management
 
 ---
 
@@ -116,7 +116,6 @@ lifeloop/
 - Focus on a smooth, emotional UX.
 - Use consistent rounded corners, soft shadows, and smooth transitions.
 - Optimize for daily 30-second usage.
-- Ensure the MVP runs on both iOS and Android with Expo Go.
 
 ---
 
