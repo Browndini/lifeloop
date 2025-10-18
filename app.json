@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "LifeLoop",
-    "slug": "LifeLoop",
+    "slug": "lifeloop",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,7 +9,21 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.lifeloop-photos.app",
+      "supportsTablet": true,
+      "icon": "./assets/images/icon.png",
+      "splash": {
+        "image": "./assets/images/splash-icon.png",
+        "imageWidth": 200,
+        "resizeMode": "contain",
+        "backgroundColor": "#ffffff"
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "LifeLoop uses your camera to capture your daily memory.",
+        "NSPhotoLibraryUsageDescription": "LifeLoop needs access to your photo library to attach a memory.",
+        "NSPhotoLibraryAddUsageDescription": "LifeLoop saves your selected images so you can revisit them later."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -38,11 +52,26 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow LifeLoop to use your camera to capture today's memory.",
+          "photosPermission": "Allow LifeLoop to access your photo library to select a memory.",
+          "microphonePermission": "Allow LifeLoop to use the microphone while recording video memories."
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0c7d65cf-25fa-4b83-b5d5-1e5f5aa20139"
+      }
+    },
+    "owner": "browndini"
   }
 }
