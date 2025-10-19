@@ -124,3 +124,5 @@ export function useEntries() {
   }
   return context;
 }
+
+export default EntriesProvider;

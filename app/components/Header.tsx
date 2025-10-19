@@ -6,7 +6,7 @@ type HeaderProps = {
   subtitle?: string;
 };
 
-export function Header({ title, subtitle }: HeaderProps) {
+function Header({ title, subtitle }: HeaderProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
@@ -30,3 +30,5 @@ const styles = StyleSheet.create({
     color: palette.textMuted,
   },
 });
+
+export default Header;

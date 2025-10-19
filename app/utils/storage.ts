@@ -32,7 +32,7 @@ export async function saveEntries(entries: JournalEntry[]): Promise<void> {
   }
 }
 
-export async function upsertEntry(newEntry: JournalEntry): Promise<JournalEntry[]> {
+export async function addOrUpdateEntry(newEntry: JournalEntry): Promise<JournalEntry[]> {
   const entries = await getEntries();
   const filtered = entries.filter((entry) => entry.date !== newEntry.date);
   const updated = [newEntry, ...filtered].sort((a, b) => b.createdAt - a.createdAt);
@@ -46,3 +46,11 @@ export async function removeEntry(id: string): Promise<JournalEntry[]> {
   await saveEntries(updated);
   return updated;
 }
+
+// Default export for Expo Router compatibility
+export default {
+  getEntries,
+  saveEntries,
+  addOrUpdateEntry,
+  removeEntry,
+};

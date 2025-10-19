@@ -9,7 +9,7 @@ type EntryCardProps = {
   style?: any;
 };
 
-export function EntryCard({ entry, onPress, onLongPress, style }: EntryCardProps) {
+function EntryCard({ entry, onPress, onLongPress, style }: EntryCardProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -61,3 +61,5 @@ const styles = StyleSheet.create({
     color: palette.textStrong,
   },
 });
+
+export default EntryCard;

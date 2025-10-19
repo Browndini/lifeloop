@@ -11,3 +11,9 @@ export const radius = {
   md: 20,
   lg: 28,
 };
+
+// Default export for Expo Router compatibility
+export default {
+  spacing,
+  radius,
+};

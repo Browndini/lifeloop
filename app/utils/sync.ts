@@ -1,13 +1,13 @@
 import {
-    collection,
-    deleteDoc,
-    doc,
-    getDocs,
-    onSnapshot,
-    orderBy,
-    query,
-    setDoc,
-    writeBatch
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+  writeBatch
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { JournalEntry } from './storage';
@@ -59,43 +59,6 @@ export class SyncService {
     }
   }
 
-  async getSyncedEntries(): Promise<JournalEntry[]> {
-    if (!this.userId) throw new Error('User not authenticated');
-
-    try {
-      const q = query(
-        this.getUserEntriesCollection(),
-        orderBy('createdAt', 'desc')
-      );
-
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-      })) as JournalEntry[];
-    } catch (error) {
-      console.error('Error fetching synced entries:', error);
-      throw error;
-    }
-  }
-
-  subscribeToEntries(callback: (entries: JournalEntry[]) => void): () => void {
-    if (!this.userId) throw new Error('User not authenticated');
-
-    const q = query(
-      this.getUserEntriesCollection(),
-      orderBy('createdAt', 'desc')
-    );
-
-    return onSnapshot(q, (querySnapshot) => {
-      const entries = querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-      })) as JournalEntry[];
-      callback(entries);
-    });
-  }
-
   async batchSync(entries: JournalEntry[]): Promise<void> {
     if (!this.userId) throw new Error('User not authenticated');
 
@@ -120,24 +83,74 @@ export class SyncService {
     }
   }
 
-  async mergeLocalAndRemote(localEntries: JournalEntry[]): Promise<JournalEntry[]> {
-    if (!this.userId) return localEntries;
+  async fetchEntries(): Promise<JournalEntry[]> {
+    if (!this.userId) throw new Error('User not authenticated');
 
     try {
-      const remoteEntries = await this.getSyncedEntries();
+      const q = query(this.getUserEntriesCollection(), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
 
-      // Simple merge strategy: prefer local entries, but add any remote-only entries
-      const mergedEntries = [...localEntries];
+      return snapshot.docs.map(doc => {
+        const data = doc.data() as SyncedEntry;
+        // Remove Firebase-specific fields before returning
+        const { userId, syncedAt, ...entry } = data;
+        return entry;
+      });
+    } catch (error) {
+      console.error('Error fetching entries:', error);
+      throw error;
+    }
+  }
 
-      remoteEntries.forEach(remoteEntry => {
-        const localIndex = localEntries.findIndex(local => local.id === remoteEntry.id);
-        if (localIndex === -1) {
-          // Remote entry doesn't exist locally, add it
-          mergedEntries.push(remoteEntry);
+  subscribeToEntries(callback: (entries: JournalEntry[]) => void): () => void {
+    if (!this.userId) throw new Error('User not authenticated');
+
+    const q = query(
+      this.getUserEntriesCollection(),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const entries = snapshot.docs.map(doc => {
+          const data = doc.data() as SyncedEntry;
+          // Remove Firebase-specific fields before returning
+          const { userId, syncedAt, ...entry } = data;
+          return entry;
+        });
+        callback(entries);
+      },
+      (error) => {
+        console.error('Error in entries subscription:', error);
+      }
+    );
+
+    return unsubscribe;
+  }
+
+  async mergeLocalAndRemote(localEntries: JournalEntry[]): Promise<JournalEntry[]> {
+    try {
+      const remoteEntries = await this.fetchEntries();
+      
+      // Create a map of remote entries by date for quick lookup
+      const remoteMap = new Map(remoteEntries.map(entry => [entry.date, entry]));
+      
+      // Merge strategy: prefer remote entries, fallback to local
+      const mergedEntries = localEntries.map(localEntry => {
+        const remoteEntry = remoteMap.get(localEntry.date);
+        if (remoteEntry) {
+          // Use remote entry if it exists and is newer
+          return remoteEntry.createdAt > localEntry.createdAt ? remoteEntry : localEntry;
         }
+        return localEntry;
       });
 
-      return mergedEntries;
+      // Add any remote entries that don't exist locally
+      const localDates = new Set(localEntries.map(entry => entry.date));
+      const newRemoteEntries = remoteEntries.filter(entry => !localDates.has(entry.date));
+      
+      return [...mergedEntries, ...newRemoteEntries].sort((a, b) => b.createdAt - a.createdAt);
     } catch (error) {
       console.error('Error merging entries:', error);
       return localEntries; // Fallback to local entries
@@ -146,3 +159,6 @@ export class SyncService {
 }
 
 export const syncService = new SyncService();
+
+// Default export for Expo Router compatibility
+export default syncService;

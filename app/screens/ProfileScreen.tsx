@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Header } from "../components/Header";
+import Header from "../components/Header";
 import { palette, shadows } from "../theme";
 
 export default function ProfileScreen() {

@@ -1,8 +1,8 @@
 import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CalendarView } from '../components/CalendarView';
-import { Header } from '../components/Header';
+import CalendarView from '../components/CalendarView';
+import Header from '../components/Header';
 import { useTheme } from '../theme';
 
 export default function CalendarScreen() {

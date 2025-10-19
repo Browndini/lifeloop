@@ -164,3 +164,6 @@ export class NotificationService {
 }
 
 export const notificationService = new NotificationService();
+
+// Default export for Expo Router compatibility
+export default notificationService;

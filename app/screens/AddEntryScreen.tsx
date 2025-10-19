@@ -4,7 +4,7 @@ import { nanoid } from "nanoid/non-secure";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Header } from "../components/Header";
+import Header from "../components/Header";
 import { useEntries } from "../context/EntriesContext";
 import { palette, shadows } from "../theme";
 import { JournalEntry } from "../utils/storage";

@@ -4,7 +4,7 @@ import { Calendar, DateData } from 'react-native-calendars';
 import { useEntries } from '../context/EntriesContext';
 import { useTheme } from '../theme';
 import { JournalEntry } from '../utils/storage';
-import { EntryCard } from './EntryCard';
+import EntryCard from './EntryCard';
 
 interface CalendarViewProps {
   onSelectDate?: (date: string) => void;
@@ -134,3 +134,5 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginBottom: 12,
   },
 });
+
+export default CalendarView;

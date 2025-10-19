@@ -5,7 +5,7 @@ type EmptyStateProps = {
   message: string;
 };
 
-export function EmptyState({ message }: EmptyStateProps) {
+function EmptyState({ message }: EmptyStateProps) {
   return (
     <View style={styles.container}>
       <View style={styles.iconWrapper}>
@@ -42,3 +42,5 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
 });
+
+export default EmptyState;
