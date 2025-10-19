@@ -1,12 +1,16 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { getEntries, JournalEntry, removeEntry, upsertEntry } from "../utils/storage";
+import { syncService } from "../utils/sync";
+import { useAuth } from "./AuthContext";
 
 type EntriesContextValue = {
   entries: JournalEntry[];
   loading: boolean;
+  syncLoading: boolean;
   addOrUpdateEntry: (entry: JournalEntry) => Promise<void>;
   deleteEntry: (id: string) => Promise<void>;
   refresh: () => Promise<void>;
+  syncToCloud: () => Promise<void>;
 };
 
 const EntriesContext = createContext<EntriesContextValue | undefined>(undefined);
@@ -18,35 +22,96 @@ type ProviderProps = {
 export function EntriesProvider({ children }: ProviderProps) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      syncService.setUserId(user.uid);
+    }
+  }, [user]);
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [user]); // Refresh when user changes (login/logout)
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     setLoading(true);
-    const stored = await getEntries();
-    setEntries(stored);
-    setLoading(false);
-  };
+    try {
+      const stored = await getEntries();
 
-  const addOrUpdateEntry = async (entry: JournalEntry) => {
-    setLoading(true);
-    const updated = await upsertEntry(entry);
-    setEntries(updated);
-    setLoading(false);
-  };
+      if (user) {
+        // Merge local and remote entries
+        const mergedEntries = await syncService.mergeLocalAndRemote(stored);
+        setEntries(mergedEntries);
+      } else {
+        setEntries(stored);
+      }
+    } catch (error) {
+      console.error('Error refreshing entries:', error);
+      // Fallback to local entries
+      const stored = await getEntries();
+      setEntries(stored);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
-  const deleteEntry = async (id: string) => {
+  const addOrUpdateEntry = useCallback(async (entry: JournalEntry) => {
     setLoading(true);
-    const updated = await removeEntry(id);
-    setEntries(updated);
-    setLoading(false);
-  };
+    try {
+      const updated = await upsertEntry(entry);
+      setEntries(updated);
+
+      // Sync to Firebase if user is authenticated
+      if (user) {
+        await syncService.syncEntry(entry);
+      }
+    } catch (error) {
+      console.error('Error adding/updating entry:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const deleteEntry = useCallback(async (id: string) => {
+    setLoading(true);
+    try {
+      const updated = await removeEntry(id);
+      setEntries(updated);
+
+      // Delete from Firebase if user is authenticated
+      if (user) {
+        await syncService.deleteEntry(id);
+      }
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const syncToCloud = useCallback(async () => {
+    if (!user) {
+      throw new Error('User must be authenticated to sync');
+    }
+
+    setSyncLoading(true);
+    try {
+      await syncService.batchSync(entries);
+    } catch (error) {
+      console.error('Error syncing to cloud:', error);
+      throw error;
+    } finally {
+      setSyncLoading(false);
+    }
+  }, [user, entries]);
 
   const value = useMemo(
-    () => ({ entries, loading, addOrUpdateEntry, deleteEntry, refresh }),
-    [entries, loading]
+    () => ({ entries, loading, syncLoading, addOrUpdateEntry, deleteEntry, refresh, syncToCloud }),
+    [entries, loading, syncLoading, addOrUpdateEntry, deleteEntry, refresh, syncToCloud]
   );
 
   return <EntriesContext.Provider value={value}>{children}</EntriesContext.Provider>;

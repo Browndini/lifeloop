@@ -1,51 +1,85 @@
-# Welcome to your Expo app 👋
+# LifeLoop 📸
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A beautiful, habit-forming journaling app that helps you capture and cherish your daily moments.
 
-## Get started
+## Features
 
-1. Install dependencies
+### ✨ Core Features
+- **Daily Photo Journaling**: Capture one meaningful moment each day with photos and captions
+- **Beautiful UI**: Clean, modern design with both light and dark themes
+- **Offline-First**: Works seamlessly without internet connection
+- **Calendar View**: Browse your memories by date with an interactive calendar
+- **Cloud Sync**: Sign in to sync your entries across devices (optional)
 
+### 🚀 Phase 2 Features (Latest)
+- **Dark Mode**: Full dark theme support with system preference detection
+- **Daily Reminders**: Get notified to capture your daily moment
+- **Calendar Integration**: Visual calendar showing days with memories
+- **Settings Screen**: Customize themes, notifications, and account settings
+- **Firebase Integration**: Cloud sync and authentication (scaffold ready)
+
+## Roadmap
+
+### Phase 3 (Next)
+- [ ] Social sharing (share memories with friends/family)
+- [ ] Memory streaks and achievements
+- [ ] Photo editing tools (filters, cropping)
+- [ ] Search functionality
+- [ ] Memory categories/tags
+- [ ] Data export (PDF, JSON)
+- [ ] Widget support (iOS/Android)
+- [ ] Memory insights/analytics
+
+### Future Enhancements
+- [ ] Multi-photo entries
+- [ ] Voice memos
+- [ ] Location tagging
+- [ ] Memory collages
+- [ ] Premium features (advanced themes, unlimited storage)
+
+## Getting Started
+
+1. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. Start the app
+2. **Set up Firebase** (optional, for cloud sync)
+   - Create a Firebase project at https://console.firebase.google.com
+   - Enable Authentication and Firestore
+   - Copy your config to `app/utils/firebase.ts`
+   - Add your config to environment variables
 
+3. **Start the app**
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+## Architecture
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **React Native + Expo**: Cross-platform mobile development
+- **TypeScript**: Type-safe development
+- **Expo Router**: File-based navigation
+- **AsyncStorage**: Local data persistence
+- **Firebase**: Cloud sync and authentication (optional)
+- **Expo Notifications**: Daily reminders
+- **React Native Calendars**: Calendar view
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Project Structure
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+app/
+├── components/          # Reusable UI components
+├── context/            # React contexts (entries, auth, theme)
+├── screens/            # Screen components
+├── utils/              # Utilities and services
+└── theme.ts           # Theme configuration
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Contributing
 
-## Learn more
+This is a personal project evolving into a premium journaling app. Contributions welcome for bug fixes and feature enhancements.
 
-To learn more about developing your project with Expo, look at the following resources:
+## License
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
-# lifeloop
+Personal project - not yet licensed for public use.

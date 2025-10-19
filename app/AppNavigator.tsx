@@ -1,35 +1,54 @@
-import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { DefaultTheme, NavigationContainer } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
+import { AuthProvider } from "./context/AuthContext";
 import { EntriesProvider } from "./context/EntriesContext";
-import HomeScreen from "./screens/HomeScreen";
 import AddEntryScreen from "./screens/AddEntryScreen";
+import CalendarScreen from "./screens/CalendarScreen";
+import HomeScreen from "./screens/HomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
-import { useColorScheme } from "react-native";
+import SettingsScreen from "./screens/SettingsScreen";
+import { ThemeProvider, useTheme } from "./theme";
+// Firebase is initialized in the firebase.ts file
 
 const Tab = createBottomTabNavigator();
 
-const AppTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: "#f9f6f2",
-  },
-};
-
 export default function AppNavigator() {
-  const scheme = useColorScheme();
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <EntriesProvider>
+          <AppNavigatorContent />
+        </EntriesProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+function AppNavigatorContent() {
+  const { theme } = useTheme();
+
+  const AppTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: theme.colors.background,
+      card: theme.colors.surface,
+      primary: theme.colors.primary,
+      text: theme.colors.textStrong,
+      border: theme.colors.border,
+    },
+  };
 
   return (
-    <EntriesProvider>
-      <NavigationContainer theme={AppTheme}>
-        <StatusBar style={scheme === "dark" ? "light" : "dark"} />
-        <Tab.Navigator
+    <NavigationContainer theme={AppTheme}>
+      <StatusBar style={theme.isDark ? "light" : "dark"} />
+      <Tab.Navigator
           screenOptions={({ route }) => ({
             headerShown: false,
-            tabBarActiveTintColor: "#966f51",
-            tabBarInactiveTintColor: "#c7aa8f",
+            tabBarActiveTintColor: theme.colors.primary,
+            tabBarInactiveTintColor: theme.colors.textMuted,
             tabBarStyle: {
               borderRadius: 32,
               marginHorizontal: 24,
@@ -37,10 +56,11 @@ export default function AppNavigator() {
               height: 68,
               paddingBottom: 12,
               paddingTop: 12,
-              backgroundColor: "white",
-              shadowColor: "#c7aa8f",
-              shadowOpacity: 0.2,
-              shadowRadius: 16,
+              backgroundColor: theme.colors.surface,
+              borderTopColor: theme.colors.border,
+              shadowColor: theme.shadows.sm.shadowColor,
+              shadowOpacity: theme.shadows.sm.shadowOpacity,
+              shadowRadius: theme.shadows.sm.shadowRadius,
             },
             tabBarIcon: ({ focused, color, size }) => {
               let iconName: keyof typeof Ionicons.glyphMap = "calendar-outline";
@@ -48,6 +68,10 @@ export default function AppNavigator() {
                 iconName = focused ? "camera" : "camera-outline";
               } else if (route.name === "Memories") {
                 iconName = focused ? "images" : "images-outline";
+              } else if (route.name === "Calendar") {
+                iconName = focused ? "calendar" : "calendar-outline";
+              } else if (route.name === "Settings") {
+                iconName = focused ? "settings" : "settings-outline";
               } else if (route.name === "Profile") {
                 iconName = focused ? "person" : "person-outline";
               }
@@ -57,9 +81,10 @@ export default function AppNavigator() {
         >
           <Tab.Screen name="Today" component={AddEntryScreen} />
           <Tab.Screen name="Memories" component={HomeScreen} />
+          <Tab.Screen name="Calendar" component={CalendarScreen} />
+          <Tab.Screen name="Settings" component={SettingsScreen} />
           <Tab.Screen name="Profile" component={ProfileScreen} />
-        </Tab.Navigator>
-      </NavigationContainer>
-    </EntriesProvider>
+      </Tab.Navigator>
+    </NavigationContainer>
   );
 }

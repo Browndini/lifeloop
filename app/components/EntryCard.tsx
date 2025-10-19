@@ -1,20 +1,21 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { JournalEntry } from "../utils/storage";
 import { palette, shadows } from "../theme";
+import { JournalEntry } from "../utils/storage";
 
 type EntryCardProps = {
   entry: JournalEntry;
   onPress?: () => void;
   onLongPress?: () => void;
+  style?: any;
 };
 
-export function EntryCard({ entry, onPress, onLongPress }: EntryCardProps) {
+export function EntryCard({ entry, onPress, onLongPress, style }: EntryCardProps) {
   return (
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
       android_ripple={{ color: palette.border }}
-      style={styles.card}
+      style={[styles.card, style]}
     >
       <Image source={{ uri: entry.imageUri }} style={styles.image} resizeMode="cover" />
       <View style={styles.content}>

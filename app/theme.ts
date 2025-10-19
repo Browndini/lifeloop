@@ -1,3 +1,8 @@
+// Re-export theme context types and hooks for convenience
+export { ThemeProvider, useTheme } from './context/ThemeContext';
+export type { Theme, ThemeColors, ThemeMode, ThemeShadows } from './context/ThemeContext';
+
+// Legacy exports for backward compatibility
 export const palette = {
   background: "#f9f6f2",
   surface: "#ffffff",

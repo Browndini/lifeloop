@@ -18,11 +18,13 @@
         "resizeMode": "contain",
         "backgroundColor": "#ffffff"
       },
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "LifeLoop uses your camera to capture your daily memory.",
         "NSPhotoLibraryUsageDescription": "LifeLoop needs access to your photo library to attach a memory.",
-        "NSPhotoLibraryAddUsageDescription": "LifeLoop saves your selected images so you can revisit them later."
+        "NSPhotoLibraryAddUsageDescription": "LifeLoop saves your selected images so you can revisit them later.",
+        "NSUserNotificationsUsageDescription": "LifeLoop sends daily reminders to help you capture your memories."
       }
     },
     "android": {
@@ -33,7 +35,12 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.SCHEDULE_EXACT_ALARM"
+      ]
     },
     "web": {
       "output": "static",
@@ -41,6 +48,7 @@
     },
     "plugins": [
       "expo-router",
+      "@react-native-firebase/app",
       [
         "expo-splash-screen",
         {
@@ -60,7 +68,23 @@
           "photosPermission": "Allow LifeLoop to access your photo library to select a memory.",
           "microphonePermission": "Allow LifeLoop to use the microphone while recording video memories."
         }
-      ]
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#966f51"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static",
+            "forceStaticLinking": ["RNFBApp"]
+          }
+        }
+      ],
     ],
     "experiments": {
       "typedRoutes": true,
