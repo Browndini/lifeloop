@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { getEntries, JournalEntry, removeEntry, upsertEntry } from "../utils/storage";
+import { addOrUpdateEntry as upsertEntry, getEntries, JournalEntry, removeEntry } from "../utils/storage";
 import { syncService } from "../utils/sync";
 import { useAuth } from "./AuthContext";
 

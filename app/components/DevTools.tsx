@@ -126,6 +126,7 @@ export default function DevTools() {
                 // Random image number between 1-1000
                 const imageNumber = Math.floor(Math.random() * 1000) + 1;
                 const imageUri = `https://testingbot.com/free-online-tools/random-avatar/200?img=${imageNumber}`;
+                console.log(imageUri);
 
                 // Random caption
                 const captions = [
@@ -144,6 +145,7 @@ export default function DevTools() {
                   'Pure joy',
                   'Peaceful vibes',
                   'Worth remembering',
+                  `Random image ${imageNumber}`,
                 ];
 
                 const entry: JournalEntry = {

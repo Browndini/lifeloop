@@ -73,6 +73,10 @@ export default function AddEntryScreen() {
       const alreadyStored = imageUri.startsWith(baseDirectory.uri);
       if (!alreadyStored) {
         const destinationFile = new File(baseDirectory, `${today}.jpg`);
+        // Delete existing file if it exists (when updating entry with new image)
+        if (destinationFile.exists) {
+          destinationFile.delete();
+        }
         const sourceFile = new File(imageUri);
         sourceFile.copy(destinationFile);
         storedUri = destinationFile.uri;
