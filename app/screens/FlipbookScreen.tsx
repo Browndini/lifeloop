@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import EmptyState from "../components/EmptyState";
@@ -30,7 +30,7 @@ export default function FlipbookScreen() {
   const getInterval = (framesPerSecond: number) => 1000 / framesPerSecond;
 
   // Animate the flip transition
-  const animateFlip = () => {
+  const animateFlip = useCallback(() => {
     // Reset animations
     flipAnimation.setValue(0);
     fadeAnimation.setValue(1);
@@ -58,12 +58,12 @@ export default function FlipbookScreen() {
       // Reset after animation completes
       flipAnimation.setValue(0);
     });
-  };
+  }, [flipAnimation, fadeAnimation]);
 
   // Playback effect
   useEffect(() => {
     if (isPlaying && sortedEntries.length > 0) {
-      intervalRef.current = setInterval(() => {
+      const interval = setInterval(() => {
         animateFlip();
         setCurrentIndex((prev) => {
           const next = prev + 1;
@@ -74,6 +74,8 @@ export default function FlipbookScreen() {
           return next;
         });
       }, getInterval(fps));
+
+      intervalRef.current = interval as unknown as NodeJS.Timeout;
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -86,7 +88,7 @@ export default function FlipbookScreen() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPlaying, fps, sortedEntries.length]);
+  }, [isPlaying, fps, sortedEntries.length, animateFlip]);
 
   const togglePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -102,8 +104,6 @@ export default function FlipbookScreen() {
       <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
         <Header title="Flipbook" subtitle="Your year in motion" />
         <EmptyState
-          icon="film-outline"
-          title="No photos yet"
           message="Capture your daily moments to see them come alive in a flipbook animation."
         />
       </SafeAreaView>
