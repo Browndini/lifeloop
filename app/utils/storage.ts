@@ -6,6 +6,7 @@ export type JournalEntry = {
   imageUri: string;
   caption: string;
   createdAt: number;
+  userId?: string; // User ID (guest ID or Firebase UID) - optional for backwards compatibility
 };
 
 const STORAGE_KEY = "lifeloop.entries";

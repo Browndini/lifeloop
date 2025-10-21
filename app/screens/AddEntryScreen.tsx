@@ -2,12 +2,13 @@ import { Directory, File, Paths } from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import { nanoid } from "nanoid/non-secure";
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
 import { useEntries } from "../context/EntriesContext";
 import { palette, shadows } from "../theme";
 import { JournalEntry } from "../utils/storage";
+import CameraScreen from "./CameraScreen";
 
 export default function AddEntryScreen() {
   const { entries, addOrUpdateEntry } = useEntries();
@@ -17,6 +18,16 @@ export default function AddEntryScreen() {
   const [imageUri, setImageUri] = useState(existing?.imageUri ?? "");
   const [caption, setCaption] = useState(existing?.caption ?? "");
   const [loading, setLoading] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+
+  // Get previous day's entry for overlay
+  const previousEntry = useMemo(() => {
+    const sortedEntries = [...entries].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    // Get most recent entry before today
+    return sortedEntries.find((entry) => entry.date < today);
+  }, [entries, today]);
 
   useEffect(() => {
     setImageUri(existing?.imageUri ?? "");
@@ -41,19 +52,13 @@ export default function AddEntryScreen() {
   };
 
   const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission needed", "We need camera access to capture your moment.");
-      return;
-    }
+    // Open custom camera with overlay
+    setShowCamera(true);
+  };
 
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets?.length) {
-      setImageUri(result.assets[0].uri);
-    }
+  const handlePhotoTaken = (uri: string) => {
+    setImageUri(uri);
+    setShowCamera(false);
   };
 
   const handleSave = async () => {
@@ -149,6 +154,15 @@ export default function AddEntryScreen() {
           </Text>
         ) : null}
       </ScrollView>
+
+      {/* Custom Camera Modal */}
+      <Modal visible={showCamera} animationType="slide" presentationStyle="fullScreen">
+        <CameraScreen
+          previousImageUri={previousEntry?.imageUri}
+          onPhotoTaken={handlePhotoTaken}
+          onClose={() => setShowCamera(false)}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }

@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { JournalEntry } from '../utils/storage';
 
@@ -56,32 +56,13 @@ const Lightbox: React.FC<LightboxProps> = ({ visible, entry, onClose }) => {
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.overlay}>
-        {/* Header - Fixed at top */}
-        <View style={[styles.header, { 
-          backgroundColor: theme.colors.surface,
-          paddingTop: insets.top,
-          paddingBottom: 16,
-        }]}>
-              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <Ionicons name="close" size={28} color="white" />
-              </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={[styles.dateText, { color: theme.colors.textStrong }]}>
-              {formatDate(entry.date)}
-            </Text>
-            <Text style={[styles.timeText, { color: theme.colors.textMuted }]}>
-              {formatTime(entry.date)}
-            </Text>
-          </View>
-        </View>
-
+      <View style={styles.overlay}>
         {/* Content Area */}
         <Pressable style={styles.contentArea} onPress={onClose}>
           <Pressable style={styles.scrollContainer} onPress={(e) => e.stopPropagation()}>
-            <ScrollView 
+            <ScrollView
               style={styles.scrollView}
-              contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+              contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 80, paddingBottom: insets.bottom + 40 }]}
               showsVerticalScrollIndicator={false}
             >
               {/* Image */}
@@ -106,7 +87,27 @@ const Lightbox: React.FC<LightboxProps> = ({ visible, entry, onClose }) => {
             </ScrollView>
           </Pressable>
         </Pressable>
-      </SafeAreaView>
+
+        {/* Header - Fixed at top */}
+        <View style={[styles.headerSafeArea, {
+          paddingTop: insets.top + 16,
+          paddingBottom: 16,
+        }]}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Ionicons name="close" size={28} color="white" />
+            </TouchableOpacity>
+            <View style={styles.headerContent}>
+              <Text style={styles.dateText}>
+                {formatDate(entry.date)}
+              </Text>
+              <Text style={styles.timeText}>
+                {formatTime(entry.date)}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
     </Modal>
   );
 };
@@ -124,14 +125,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
+  headerSafeArea: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    elevation: 1000,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
-    zIndex: 1000,
-    elevation: 1000,
+    backgroundColor: 'transparent',
   },
   closeButton: {
     padding: 12,
@@ -151,10 +157,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 2,
+    color: 'white',
   },
   timeText: {
     fontSize: 14,
     fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.7)',
   },
   scrollView: {
     flex: 1,
@@ -166,6 +174,8 @@ const styles = StyleSheet.create({
     width: screenWidth,
     height: screenHeight * 0.35,
     marginBottom: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   image: {
     width: '100%',

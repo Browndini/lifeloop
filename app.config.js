@@ -18,14 +18,14 @@ module.exports = ({ config }) => {
       userInterfaceStyle: "automatic",
       newArchEnabled: true,
     ios: {
-      bundleIdentifier: isDev ? "com.lifeloop-photos.dev" : isPreview ? "com.lifeloop-photos.preview" : "com.lifeloop-photos.app",
+      bundleIdentifier: "com.lifeloop-photos.app",
       supportsTablet: true,
       icon: "./assets/images/icon.png",
       splash: {
         image: "./assets/images/splash-icon.png",
         imageWidth: 200,
         resizeMode: "contain",
-        backgroundColor: "#ffffff"
+        backgroundColor: "#f9f6f2"
       },
       googleServicesFile: "./GoogleService-Info.plist",
       infoPlist: {
@@ -38,7 +38,7 @@ module.exports = ({ config }) => {
     },
     android: {
       adaptiveIcon: {
-        backgroundColor: "#E6F4FE",
+        backgroundColor: "#f9f6f2",
         foregroundImage: "./assets/images/android-icon-foreground.png",
         backgroundImage: "./assets/images/android-icon-background.png",
         monochromeImage: "./assets/images/android-icon-monochrome.png"
@@ -47,6 +47,8 @@ module.exports = ({ config }) => {
       predictiveBackGestureEnabled: false,
       package: isDev ? "com.lifeloopphotos.dev" : isPreview ? "com.lifeloopphotos.preview" : "com.lifeloopphotos",
       permissions: [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
         "android.permission.SCHEDULE_EXACT_ALARM"
@@ -59,15 +61,18 @@ module.exports = ({ config }) => {
     plugins: [
       "expo-router",
       "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-google-signin/google-signin",
+      "expo-apple-authentication",
       [
         "expo-splash-screen",
         {
           image: "./assets/images/splash-icon.png",
           imageWidth: 200,
           resizeMode: "contain",
-          backgroundColor: "#ffffff",
+          backgroundColor: "#f9f6f2",
           dark: {
-            backgroundColor: "#000000"
+            backgroundColor: "#966f51"
           }
         }
       ],
@@ -101,7 +106,7 @@ module.exports = ({ config }) => {
         {
           ios: {
             useFrameworks: "static",
-            forceStaticLinking: ["RNFBApp"]
+            forceStaticLinking: ["RNFBApp", "RNFBAuth", "RNFBFunctions", "RNFBStorage", "RNFBFirestore"]
           }
         }
       ],

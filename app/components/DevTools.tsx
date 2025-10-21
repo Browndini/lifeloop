@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Asset } from 'expo-asset';
 import { nanoid } from 'nanoid/non-secure';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -11,7 +12,7 @@ import { shouldShowDevTools } from '../utils/devConfig';
 import { JournalEntry } from '../utils/storage';
 
 export default function DevTools() {
-  const { user, loading: authLoading, signIn, signOutUser } = useAuth();
+  const { user, loading: authLoading, isGuestMode, authProvider, currentUserId, signInWithEmail, signOutUser } = useAuth();
   const { entries, loading: entriesLoading, syncLoading, refresh, syncToCloud } = useEntries();
   const { theme, toggleTheme } = useTheme();
 
@@ -45,10 +46,11 @@ export default function DevTools() {
 
   const handleSignInOut = async () => {
     try {
-      if (user) {
+      if (user || isGuestMode) {
         await signOutUser();
       } else {
-        await signIn();
+        // Quick dev sign in with test account
+        await signInWithEmail('test@lifeloop.com', 'test123');
       }
     } catch {
       Alert.alert('Error', 'Failed to sign in/out');
@@ -70,21 +72,40 @@ export default function DevTools() {
   };
 
   const handleClearEntries = () => {
+    const isAuthenticated = user && !isGuestMode;
+    const message = isAuthenticated
+      ? 'This will delete all entries from local storage AND cloud (Firestore). This action cannot be undone.'
+      : 'This will delete all local entries. This action cannot be undone.';
+
     Alert.alert(
-      'Clear All Entries',
-      'This will delete all local entries. This action cannot be undone.',
+      'Delete All Entries',
+      message,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Delete All',
           style: 'destructive',
           onPress: async () => {
             try {
+              // Clear local storage
               await AsyncStorage.setItem('lifeloop.entries', JSON.stringify([]));
+
+              // Delete from Firestore if authenticated
+              if (isAuthenticated) {
+                const { syncService } = await import('../utils/sync');
+                await syncService.deleteAllEntries();
+              }
+
               await refresh();
-              Alert.alert('Success', 'All entries cleared');
-            } catch {
-              Alert.alert('Error', 'Failed to clear entries');
+
+              const successMessage = isAuthenticated
+                ? 'All entries deleted from local storage and cloud'
+                : 'All local entries deleted';
+
+              Alert.alert('Success', successMessage);
+            } catch (error) {
+              console.error('Error clearing entries:', error);
+              Alert.alert('Error', 'Failed to delete all entries. Check logs for details.');
             }
           },
         },
@@ -117,16 +138,16 @@ export default function DevTools() {
               const newEntries: JournalEntry[] = [];
               const today = new Date();
 
+              // Load the local test image asset
+              const asset = Asset.fromModule(require('../../assets/images/kb.jpeg'));
+              await asset.downloadAsync();
+              const imageUri = asset.localUri || asset.uri;
+
               for (let i = 0; i < count; i++) {
                 // Generate random date in the past (last 365 days)
                 const daysAgo = Math.floor(Math.random() * 365);
                 const entryDate = new Date(today);
                 entryDate.setDate(entryDate.getDate() - daysAgo);
-
-                // Random image number between 1-1000
-                const imageNumber = Math.floor(Math.random() * 1000) + 1;
-                const imageUri = `https://testingbot.com/free-online-tools/random-avatar/200?img=${imageNumber}`;
-                console.log(imageUri);
 
                 // Random caption
                 const captions = [
@@ -145,7 +166,6 @@ export default function DevTools() {
                   'Pure joy',
                   'Peaceful vibes',
                   'Worth remembering',
-                  `Random image ${imageNumber}`,
                 ];
 
                 const entry: JournalEntry = {
@@ -244,24 +264,69 @@ export default function DevTools() {
             </Text>
             <View style={[styles.card, { backgroundColor: theme.colors.background }]}>
               <InfoRow
-                label="Signed In"
-                value={user ? 'Yes' : 'No'}
+                label="Auth Status"
+                value={
+                  isGuestMode
+                    ? 'Guest Mode'
+                    : user
+                    ? 'Authenticated'
+                    : 'Not Signed In'
+                }
                 theme={theme}
               />
               <InfoRow
-                label="User ID"
-                value={user?.uid || 'None'}
+                label="Auth Provider"
+                value={authProvider || 'None'}
+                theme={theme}
+              />
+              <InfoRow
+                label="Current User ID"
+                value={currentUserId || 'None'}
                 theme={theme}
                 mono
               />
               <InfoRow
-                label="Loading"
-                value={authLoading ? 'Yes' : 'No'}
+                label="Firebase UID"
+                value={user?.uid || 'N/A'}
+                theme={theme}
+                mono
+              />
+              <InfoRow
+                label="Email"
+                value={user?.email || 'N/A'}
+                theme={theme}
+              />
+              <InfoRow
+                label="Email Verified"
+                value={user?.emailVerified ? 'Yes' : 'No'}
                 theme={theme}
               />
               <InfoRow
                 label="Anonymous"
                 value={user?.isAnonymous ? 'Yes' : 'No'}
+                theme={theme}
+              />
+              <InfoRow
+                label="Creation Time"
+                value={
+                  user?.metadata.creationTime
+                    ? new Date(user.metadata.creationTime).toLocaleString()
+                    : 'N/A'
+                }
+                theme={theme}
+              />
+              <InfoRow
+                label="Last Sign In"
+                value={
+                  user?.metadata.lastSignInTime
+                    ? new Date(user.metadata.lastSignInTime).toLocaleString()
+                    : 'N/A'
+                }
+                theme={theme}
+              />
+              <InfoRow
+                label="Loading"
+                value={authLoading ? 'Yes' : 'No'}
                 theme={theme}
               />
             </View>
@@ -276,6 +341,16 @@ export default function DevTools() {
               <InfoRow
                 label="Total Entries"
                 value={entries.length.toString()}
+                theme={theme}
+              />
+              <InfoRow
+                label="Storage Location"
+                value={isGuestMode ? 'Local Only' : user ? 'Local + Cloud' : 'Local Only'}
+                theme={theme}
+              />
+              <InfoRow
+                label="Sync Enabled"
+                value={user && !isGuestMode ? 'Yes' : 'No'}
                 theme={theme}
               />
               <InfoRow
@@ -306,6 +381,19 @@ export default function DevTools() {
                 }
                 theme={theme}
               />
+              <InfoRow
+                label="Entries w/ User ID"
+                value={`${entries.filter(e => e.userId).length} / ${entries.length}`}
+                theme={theme}
+              />
+              {isGuestMode && entries.length > 0 && (
+                <View style={[styles.warningBox, { backgroundColor: theme.colors.surface, borderColor: '#ff9500' }]}>
+                  <Ionicons name="warning" size={16} color="#ff9500" />
+                  <Text style={[styles.warningText, { color: theme.colors.textStrong }]}>
+                    {entries.length} {entries.length === 1 ? 'entry' : 'entries'} will sync when you sign in
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
 
@@ -373,7 +461,7 @@ export default function DevTools() {
                 disabled={isGenerating}
               />
               <Text style={[styles.helperText, { color: theme.colors.textMuted }]}>
-                Creates random memories with past dates and random avatar images
+                Creates random memories with past dates using your test image (kb.jpeg)
               </Text>
             </View>
           </View>
@@ -385,8 +473,8 @@ export default function DevTools() {
             </Text>
             <View style={styles.actionsContainer}>
               <ActionButton
-                label={user ? 'Sign Out' : 'Sign In'}
-                icon={user ? 'log-out-outline' : 'log-in-outline'}
+                label={user || isGuestMode ? 'Sign Out' : 'Sign In (Test Account)'}
+                icon={user || isGuestMode ? 'log-out-outline' : 'log-in-outline'}
                 onPress={handleSignInOut}
                 theme={theme}
               />
@@ -404,7 +492,7 @@ export default function DevTools() {
                 theme={theme}
               />
               <ActionButton
-                label="Clear Entries"
+                label="Delete All Entries"
                 icon="trash-outline"
                 onPress={handleClearEntries}
                 theme={theme}
@@ -634,5 +722,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 8,
     lineHeight: 16,
+  },
+  warningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  warningText: {
+    fontSize: 13,
+    fontWeight: '500',
+    flex: 1,
   },
 });

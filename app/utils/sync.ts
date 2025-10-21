@@ -1,15 +1,4 @@
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  onSnapshot,
-  orderBy,
-  query,
-  setDoc,
-  writeBatch
-} from 'firebase/firestore';
-import { db } from './firebase';
+import firestore from '@react-native-firebase/firestore';
 import { JournalEntry } from './storage';
 
 const ENTRIES_COLLECTION = 'entries';
@@ -28,7 +17,10 @@ export class SyncService {
 
   private getUserEntriesCollection() {
     if (!this.userId) throw new Error('User not authenticated');
-    return collection(db, 'users', this.userId, ENTRIES_COLLECTION);
+    return firestore()
+      .collection('users')
+      .doc(this.userId)
+      .collection(ENTRIES_COLLECTION);
   }
 
   async syncEntry(entry: JournalEntry): Promise<void> {
@@ -41,7 +33,7 @@ export class SyncService {
         syncedAt: Date.now(),
       };
 
-      await setDoc(doc(this.getUserEntriesCollection(), entry.id), syncedEntry);
+      await this.getUserEntriesCollection().doc(entry.id).set(syncedEntry);
     } catch (error) {
       console.error('Error syncing entry:', error);
       throw error;
@@ -52,7 +44,7 @@ export class SyncService {
     if (!this.userId) throw new Error('User not authenticated');
 
     try {
-      await deleteDoc(doc(this.getUserEntriesCollection(), entryId));
+      await this.getUserEntriesCollection().doc(entryId).delete();
     } catch (error) {
       console.error('Error deleting synced entry:', error);
       throw error;
@@ -63,7 +55,7 @@ export class SyncService {
     if (!this.userId) throw new Error('User not authenticated');
 
     try {
-      const batch = writeBatch(db);
+      const batch = firestore().batch();
       const userId = this.userId; // Capture the non-null value
 
       entries.forEach(entry => {
@@ -72,7 +64,7 @@ export class SyncService {
           userId,
           syncedAt: Date.now(),
         };
-        const entryRef = doc(this.getUserEntriesCollection(), entry.id);
+        const entryRef = this.getUserEntriesCollection().doc(entry.id);
         batch.set(entryRef, syncedEntry);
       });
 
@@ -87,8 +79,9 @@ export class SyncService {
     if (!this.userId) throw new Error('User not authenticated');
 
     try {
-      const q = query(this.getUserEntriesCollection(), orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
+      const snapshot = await this.getUserEntriesCollection()
+        .orderBy('createdAt', 'desc')
+        .get();
 
       return snapshot.docs.map(doc => {
         const data = doc.data() as SyncedEntry;
@@ -105,26 +98,22 @@ export class SyncService {
   subscribeToEntries(callback: (entries: JournalEntry[]) => void): () => void {
     if (!this.userId) throw new Error('User not authenticated');
 
-    const q = query(
-      this.getUserEntriesCollection(),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const entries = snapshot.docs.map(doc => {
-          const data = doc.data() as SyncedEntry;
-          // Remove Firebase-specific fields before returning
-          const { userId, syncedAt, ...entry } = data;
-          return entry;
-        });
-        callback(entries);
-      },
-      (error) => {
-        console.error('Error in entries subscription:', error);
-      }
-    );
+    const unsubscribe = this.getUserEntriesCollection()
+      .orderBy('createdAt', 'desc')
+      .onSnapshot(
+        (snapshot) => {
+          const entries = snapshot.docs.map(doc => {
+            const data = doc.data() as SyncedEntry;
+            // Remove Firebase-specific fields before returning
+            const { userId, syncedAt, ...entry } = data;
+            return entry;
+          });
+          callback(entries);
+        },
+        (error) => {
+          console.error('Error in entries subscription:', error);
+        }
+      );
 
     return unsubscribe;
   }
@@ -132,10 +121,10 @@ export class SyncService {
   async mergeLocalAndRemote(localEntries: JournalEntry[]): Promise<JournalEntry[]> {
     try {
       const remoteEntries = await this.fetchEntries();
-      
+
       // Create a map of remote entries by date for quick lookup
       const remoteMap = new Map(remoteEntries.map(entry => [entry.date, entry]));
-      
+
       // Merge strategy: prefer remote entries, fallback to local
       const mergedEntries = localEntries.map(localEntry => {
         const remoteEntry = remoteMap.get(localEntry.date);
@@ -149,11 +138,30 @@ export class SyncService {
       // Add any remote entries that don't exist locally
       const localDates = new Set(localEntries.map(entry => entry.date));
       const newRemoteEntries = remoteEntries.filter(entry => !localDates.has(entry.date));
-      
+
       return [...mergedEntries, ...newRemoteEntries].sort((a, b) => b.createdAt - a.createdAt);
     } catch (error) {
       console.error('Error merging entries:', error);
       return localEntries; // Fallback to local entries
+    }
+  }
+
+  async deleteAllEntries(): Promise<void> {
+    if (!this.userId) throw new Error('User not authenticated');
+
+    try {
+      const snapshot = await this.getUserEntriesCollection().get();
+      const batch = firestore().batch();
+
+      snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      console.log(`Deleted ${snapshot.docs.length} entries from Firestore`);
+    } catch (error) {
+      console.error('Error deleting all entries from Firestore:', error);
+      throw error;
     }
   }
 }

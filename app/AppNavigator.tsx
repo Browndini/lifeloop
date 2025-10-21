@@ -4,17 +4,19 @@ import { DefaultTheme, NavigationContainer } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { BlurView } from "expo-blur";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { StyleSheet } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { useState } from "react";
 import DevTools from "./components/DevTools";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { EntriesProvider } from "./context/EntriesContext";
 import AddEntryScreen from "./screens/AddEntryScreen";
 import CalendarScreen from "./screens/CalendarScreen";
 import HomeScreen from "./screens/HomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import SettingsScreen from "./screens/SettingsScreen";
+import LoginScreen from "./screens/LoginScreen";
+import EmailLoginScreen from "./screens/EmailLoginScreen";
 import { ThemeProvider, useTheme } from "./theme";
-// Firebase is initialized in the firebase.ts file
 
 const Tab = createBottomTabNavigator();
 
@@ -32,7 +34,27 @@ export default function AppNavigator() {
 
 function AppNavigatorContent() {
   const { theme } = useTheme();
+  const { user, loading, isGuestMode } = useAuth();
+  const [showEmailLogin, setShowEmailLogin] = useState(false);
 
+  // Show loading spinner while checking auth state
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  // Show login screen if not authenticated and not in guest mode
+  if (!user && !isGuestMode) {
+    if (showEmailLogin) {
+      return <EmailLoginScreen onBack={() => setShowEmailLogin(false)} />;
+    }
+    return <LoginScreen onEmailLogin={() => setShowEmailLogin(true)} />;
+  }
+
+  // User is authenticated or in guest mode - show main app
   const AppTheme = {
     ...DefaultTheme,
     colors: {

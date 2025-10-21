@@ -6,18 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **LifeLoop** is a minimalist daily photo journal app built with Expo and React Native. Users capture one photo + caption per day, building a beautiful timeline of memories. The app is offline-first with optional Firebase cloud sync.
 
-**Status:** Phase 2 complete (dark mode, notifications, calendar, Firebase sync)
+**Status:** Phase 3 in progress - Authentication system complete (login screens, Google/Apple/Email sign-in, guest mode)
 
 ## Commands
 
 ### Development
 ```bash
 npm install                 # Install dependencies
-npx expo start              # Start development server
+npx expo start --dev-client # Start development server (requires dev build)
 npx expo start --android    # Run on Android
 npx expo start --ios        # Run on iOS
 npm run lint                # Run ESLint
 ```
+
+**Note:** App now requires EAS development build due to React Native Firebase native modules. Cannot use Expo Go.
 
 ### Building with EAS
 ```bash
@@ -45,8 +47,10 @@ The app uses React Context for global state, organized into three main providers
    - Provides theme colors and shadows to all components
 
 2. **AuthProvider** (`app/context/AuthContext.tsx`)
-   - Handles Firebase anonymous authentication
+   - Handles Firebase authentication (Google, Apple, Email/Password)
    - Manages user sign-in/sign-out state
+   - Supports guest mode (offline-only, no authentication)
+   - Tracks authentication provider and auth state
    - Required for cloud sync functionality
 
 3. **EntriesProvider** (`app/context/EntriesContext.tsx`)
@@ -67,7 +71,9 @@ ThemeProvider → AuthProvider → EntriesProvider → App
 - App works fully offline
 
 **Cloud Sync (`app/utils/sync.ts`):**
-- Anonymous Firebase authentication (no sign-up required)
+- Uses React Native Firebase (@react-native-firebase/firestore)
+- Authenticated users (Google, Apple, Email) get automatic cloud sync
+- Guest mode users have no cloud sync (local only)
 - Per-user Firestore collections: `users/{userId}/entries/{entryId}`
 - Merge strategy: newer `createdAt` timestamp wins
 - Sync operations:
@@ -77,11 +83,23 @@ ThemeProvider → AuthProvider → EntriesProvider → App
 
 ### Navigation Structure
 
+**Authentication Flow:**
+- **LoginScreen** - Shown if not authenticated and not in guest mode
+  - Google Sign-In button
+  - Apple Sign-In button (iOS only)
+  - Email Sign-In button → navigates to EmailLoginScreen
+  - "Skip for now" → enters guest mode
+- **EmailLoginScreen** - Email/password authentication form
+  - Toggle between sign-in and sign-up
+  - Password reset functionality
+  - Back button to LoginScreen
+
+**Main App (after auth or guest mode):**
 Bottom tab navigator with 5 screens:
 - **Today** (`AddEntryScreen`) - Capture daily photo
 - **Memories** (`HomeScreen`) - Timeline of entries
 - **Calendar** (`CalendarScreen`) - Calendar view with marked dates
-- **Settings** (`SettingsScreen`) - Theme, notifications, sync controls
+- **Settings** (`SettingsScreen`) - Theme, notifications, auth status, sync controls
 - **Profile** (`ProfileScreen`) - User profile (placeholder)
 
 ### Styling Approach
@@ -113,9 +131,12 @@ All components consume theme via `useTheme()` hook.
 - Graceful degradation if permissions denied
 
 ### Firebase Configuration
-- Config in `app/utils/firebase.ts`
-- Uses Firebase Web SDK (not React Native Firebase)
-- Anonymous auth enabled for frictionless onboarding
+- Config in `app/utils/firebaseConfig.ts`
+- Uses React Native Firebase (@react-native-firebase/auth, @react-native-firebase/firestore)
+- Native config files: `GoogleService-Info.plist` (iOS), `google-services.json` (Android)
+- Authentication methods: Google, Apple (iOS), Email/Password, Anonymous (fallback)
+- Guest mode available for offline-only usage (no authentication required)
+- See AUTH_SETUP.md for complete configuration guide
 
 ## Common Patterns
 
@@ -126,7 +147,15 @@ import { useAuth } from './context/AuthContext';
 import { useTheme } from './context/ThemeContext';
 
 const { entries, addOrUpdateEntry, deleteEntry, syncToCloud } = useEntries();
-const { user, signIn, signOutUser } = useAuth();
+const {
+  user,
+  isGuestMode,
+  authProvider,
+  signInWithEmail,
+  signInWithGoogle,
+  signInWithApple,
+  signOutUser
+} = useAuth();
 const { theme, setThemeMode, toggleTheme } = useTheme();
 ```
 
@@ -168,17 +197,19 @@ app/
 │   ├── AuthContext.tsx
 │   ├── EntriesContext.tsx
 │   └── ThemeContext.tsx
-├── screens/           # Tab screens
-│   ├── AddEntryScreen.tsx
-│   ├── CalendarScreen.tsx
-│   ├── HomeScreen.tsx
-│   ├── ProfileScreen.tsx
-│   └── SettingsScreen.tsx
+├── screens/           # App screens
+│   ├── AddEntryScreen.tsx      # Today tab - capture daily photo
+│   ├── CalendarScreen.tsx      # Calendar tab
+│   ├── EmailLoginScreen.tsx    # Email/password authentication form
+│   ├── HomeScreen.tsx          # Memories tab - timeline
+│   ├── LoginScreen.tsx         # Main login screen with auth options
+│   ├── ProfileScreen.tsx       # Profile tab
+│   └── SettingsScreen.tsx      # Settings tab with auth status
 ├── utils/             # Core services
-│   ├── firebase.ts    # Firebase initialization
-│   ├── notifications.ts
-│   ├── storage.ts     # AsyncStorage operations
-│   └── sync.ts        # Firebase sync service
+│   ├── firebaseConfig.ts  # React Native Firebase initialization
+│   ├── notifications.ts   # Daily reminder notifications
+│   ├── storage.ts         # AsyncStorage operations (local data)
+│   └── sync.ts            # Firestore cloud sync service
 ├── AppNavigator.tsx   # Tab navigator + providers
 ├── _layout.tsx        # Root layout
 └── theme.ts          # Theme types (deprecated - use ThemeContext)
@@ -186,24 +217,35 @@ app/
 
 ## Development Notes
 
-### Firebase Setup (Optional)
+### Firebase Setup (Required for Authentication & Sync)
+**See AUTH_SETUP.md for complete configuration guide**
+
+Quick setup:
 1. Create project at https://console.firebase.google.com
-2. Enable **Authentication** → Anonymous sign-in
+2. Enable **Authentication** → Google, Apple, Email/Password
 3. Enable **Firestore Database**
-4. Copy web config to `app/utils/firebase.ts`
-5. For iOS: Add `GoogleService-Info.plist` to project root
-6. For Android: Add `google-services.json` to project root
+4. Download `GoogleService-Info.plist` (iOS) and place in project root
+5. Download `google-services.json` (Android) and place in project root
+6. Configure Google Sign-In (get Web Client ID)
+7. Create `.env` file with EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+8. Update `app.config.js` with REVERSED_CLIENT_ID for iOS
 
 ### Expo Configuration
 - `app.config.js` handles environment-based app names/bundle IDs
 - Build profiles: development (dev client), simulator, preview, production
 - Uses Expo's new architecture (`newArchEnabled: true`)
 
+### Testing Authentication
+1. **Guest Mode**: Tap "Skip for now" on login screen (offline-only)
+2. **Google Sign-In**: Tap "Continue with Google", select account
+3. **Apple Sign-In** (iOS): Tap "Continue with Apple", authenticate
+4. **Email Sign-In**: Tap "Continue with Email", enter credentials
+
 ### Testing Sync
-1. Sign in via Settings screen
+1. Sign in with Google/Apple/Email
 2. Add entries on device A
 3. Sign in with same account on device B
-4. Entries should appear after merge
+4. Entries should appear after automatic merge
 
 ### Notification Testing
 1. Enable in Settings screen
@@ -213,15 +255,19 @@ app/
 
 ## Roadmap Context
 
-**Completed (Phase 1 & 2):**
+**Completed (Phase 1, 2 & 3):**
 - Daily photo journaling
 - Local storage with AsyncStorage
 - Timeline and calendar views
 - Dark mode
-- Firebase sync
+- Firebase cloud sync
 - Daily reminder notifications
+- Authentication system (Google, Apple, Email/Password)
+- Login screens with guest mode support
+- Protected routes
+- Auth status in Settings
 
-**Phase 3 (Next):**
+**Phase 4 (Next):**
 - Social sharing
 - Memory streaks/achievements
 - Photo editing tools
