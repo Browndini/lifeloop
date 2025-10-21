@@ -10,7 +10,7 @@ module.exports = ({ config }) => {
   return {
     expo: {
       name: appName,
-      slug: "lifeloopin",
+      slug: "lifeloop",
       version: "1.0.0",
       orientation: "portrait",
       icon: "./assets/images/icon.png",
