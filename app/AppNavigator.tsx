@@ -12,7 +12,7 @@ import { EntriesProvider } from "./context/EntriesContext";
 import AddEntryScreen from "./screens/AddEntryScreen";
 import CalendarScreen from "./screens/CalendarScreen";
 import HomeScreen from "./screens/HomeScreen";
-import ProfileScreen from "./screens/ProfileScreen";
+import FlipbookScreen from "./screens/FlipbookScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 import LoginScreen from "./screens/LoginScreen";
 import EmailLoginScreen from "./screens/EmailLoginScreen";
@@ -112,8 +112,8 @@ function AppNavigatorContent() {
                   iconName = focused ? "calendar" : "calendar-outline";
                 } else if (route.name === "Settings") {
                   iconName = focused ? "settings" : "settings-outline";
-                } else if (route.name === "Profile") {
-                  iconName = focused ? "person" : "person-outline";
+                } else if (route.name === "Flipbook") {
+                  iconName = focused ? "film" : "film-outline";
                 }
                 return <Ionicons name={iconName} size={size} color={color} />;
               },
@@ -122,8 +122,8 @@ function AppNavigatorContent() {
             <Tab.Screen name="Today" component={AddEntryScreen} />
             <Tab.Screen name="Memories" component={HomeScreen} />
             <Tab.Screen name="Calendar" component={CalendarScreen} />
+            <Tab.Screen name="Flipbook" component={FlipbookScreen} />
             <Tab.Screen name="Settings" component={SettingsScreen} />
-            <Tab.Screen name="Profile" component={ProfileScreen} />
         </Tab.Navigator>
         <DevTools />
       </NavigationContainer>

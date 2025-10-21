@@ -81,19 +81,25 @@ export default function SettingsScreen() {
   };
 
   const handleSignOut = async () => {
+    const title = isGuestMode ? 'Exit Guest Mode' : 'Sign Out';
+    const message = isGuestMode
+      ? 'Are you sure you want to exit guest mode? Your local data will remain and you can sign in with an account.'
+      : 'Are you sure you want to sign out? Your local data will remain.';
+    const buttonText = isGuestMode ? 'Exit' : 'Sign Out';
+
     Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out? Your local data will remain.',
+      title,
+      message,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Sign Out',
+          text: buttonText,
           style: 'destructive',
           onPress: async () => {
             try {
               await signOutUser();
             } catch {
-              Alert.alert('Error', 'Failed to sign out');
+              Alert.alert('Error', `Failed to ${isGuestMode ? 'exit guest mode' : 'sign out'}`);
             }
           },
         },
@@ -333,9 +339,11 @@ export default function SettingsScreen() {
             )}
           </View>
 
-          {user && !isGuestMode && (
+          {(user || isGuestMode) && (
             <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-              <Text style={styles.signOutButtonText}>Sign Out</Text>
+              <Text style={styles.signOutButtonText}>
+                {isGuestMode ? 'Exit Guest Mode' : 'Sign Out'}
+              </Text>
             </TouchableOpacity>
           )}
         </View>

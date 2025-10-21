@@ -267,16 +267,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOutUser = async () => {
     try {
-      console.log('[Auth] 🚪 Signing out...');
+      console.log('[Auth] 🚪 Signing out...', { isGuestMode, hasUser: !!user });
 
-      // Sign out from Firebase
-      await auth().signOut();
+      // Sign out from Firebase (only if there's a Firebase user)
+      if (user) {
+        await auth().signOut();
+      }
 
       // Clear guest mode (but keep guest ID for future use)
       await AsyncStorage.removeItem(GUEST_MODE_KEY);
       setIsGuestMode(false);
       setAuthProvider(null);
       setCurrentUserId(null);
+      setUser(null);
 
       console.log('[Auth] ✅ Signed out successfully');
     } catch (error: any) {

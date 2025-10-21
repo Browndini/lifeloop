@@ -7,6 +7,7 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 export interface ThemeColors {
   background: string;
   surface: string;
+  surfaceOverlay: string;
   primary: string;
   primaryLight: string;
   accent: string;
@@ -40,6 +41,7 @@ export interface Theme {
 const lightColors: ThemeColors = {
   background: "#f9f6f2",
   surface: "#ffffff",
+  surfaceOverlay: "rgba(255, 255, 255, 0.9)",
   primary: "#966f51",
   primaryLight: "#c7aa8f",
   accent: "#b08c6f",
@@ -51,6 +53,7 @@ const lightColors: ThemeColors = {
 const darkColors: ThemeColors = {
   background: "#1a1a1a",
   surface: "#2d2d2d",
+  surfaceOverlay: "rgba(45, 45, 45, 0.9)",
   primary: "#d4b896",
   primaryLight: "#e6c8a3",
   accent: "#c7aa8f",

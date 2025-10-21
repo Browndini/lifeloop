@@ -7,6 +7,7 @@ export type JournalEntry = {
   caption: string;
   createdAt: number;
   userId?: string; // User ID (guest ID or Firebase UID) - optional for backwards compatibility
+  mood?: string; // Mood/emotion for the day - optional
 };
 
 const STORAGE_KEY = "lifeloop.entries";

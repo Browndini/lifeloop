@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
+import MoodPicker from "../components/MoodPicker";
 import { useEntries } from "../context/EntriesContext";
 import { palette, shadows } from "../theme";
 import { JournalEntry } from "../utils/storage";
@@ -17,6 +18,7 @@ export default function AddEntryScreen() {
 
   const [imageUri, setImageUri] = useState(existing?.imageUri ?? "");
   const [caption, setCaption] = useState(existing?.caption ?? "");
+  const [mood, setMood] = useState<string | undefined>(existing?.mood);
   const [loading, setLoading] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
 
@@ -32,7 +34,8 @@ export default function AddEntryScreen() {
   useEffect(() => {
     setImageUri(existing?.imageUri ?? "");
     setCaption(existing?.caption ?? "");
-  }, [existing?.caption, existing?.imageUri]);
+    setMood(existing?.mood);
+  }, [existing?.caption, existing?.imageUri, existing?.mood]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -93,6 +96,7 @@ export default function AddEntryScreen() {
         imageUri: storedUri,
         caption: caption.trim(),
         createdAt: existing?.createdAt ?? Date.now(),
+        mood,
       };
 
       await addOrUpdateEntry(entry);
@@ -137,6 +141,13 @@ export default function AddEntryScreen() {
           editable={!disabled}
         />
         <Text style={styles.charCount}>{caption.length}/100</Text>
+
+        <Text style={styles.label}>How are you doing today?</Text>
+        <MoodPicker
+          selectedMood={mood}
+          onMoodSelect={setMood}
+          accentColor={palette.primary}
+        />
 
         <TouchableOpacity
           onPress={handleSave}

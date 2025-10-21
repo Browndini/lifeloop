@@ -4,6 +4,7 @@ import { Calendar, DateData } from 'react-native-calendars';
 import { useEntries } from '../context/EntriesContext';
 import { useTheme } from '../theme';
 import { JournalEntry } from '../utils/storage';
+import { getMoodColor } from '../utils/moodConfig';
 import EntryCard from './EntryCard';
 
 interface CalendarViewProps {
@@ -33,9 +34,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectDate }) => {
     const marked: Record<string, any> = {};
 
     Object.keys(entriesByDate).forEach(date => {
+      // Get the first entry's mood for this date (if multiple entries exist)
+      const firstEntry = entriesByDate[date][0];
+      const moodColor = getMoodColor(firstEntry?.mood, theme.colors.primary);
+
       marked[date] = {
         marked: true,
-        dotColor: theme.colors.primary,
+        dotColor: moodColor,
         selectedColor: theme.colors.primaryLight,
       };
     });
