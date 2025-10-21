@@ -5,12 +5,12 @@ module.exports = ({ config }) => {
   const isPreview = environment === 'preview';
 
   // Set app name based on build type
-  const appName = isDev ? 'LifeLoop Dev' : isPreview ? 'LifeLoop Preview' : 'LifeLoop';
+  const appName = isDev ? 'life-loopin Dev' : isPreview ? 'life-loopin Preview' : 'life-loopin';
 
   return {
     expo: {
       name: appName,
-      slug: "lifeloop",
+      slug: "lifeloopin",
       version: "1.0.0",
       orientation: "portrait",
       icon: "./assets/images/icon.png",
