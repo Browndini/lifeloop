@@ -1,6 +1,6 @@
 module.exports = ({ config }) => {
   // Get environment from EAS build profile or default to development
-  const environment = process.env.EAS_BUILD_PROFILE || 'development';
+  const environment = __DEV__ ? 'development' : 'production';
   const isDev = environment.includes('development') || environment === 'simulator';
   const isPreview = environment === 'preview';
 
